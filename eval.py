@@ -141,25 +141,35 @@ print('{0}_best_model.weights'.format(prefix))
 model.load_weights('{0}_best_1_model.weights'.format(prefix))
 idxs1, preds1 = eval_submission(test_generator)
 
+print('Beging first')
 model.load_weights('{0}_best_2_model.weights'.format(prefix))
 idxs1, preds2 = eval_submission(test_generator)
 
+print('Begin three')
 model.load_weights('{0}_best_3_model.weights'.format(prefix))
 idxs1, preds3 = eval_submission(test_generator)
 
 model.load_weights('{0}_best_4_model.weights'.format(prefix))
 idxs1, preds4 = eval_submission(test_generator)
 
+print('Begin last')
 model.load_weights('{0}_best_5_model.weights'.format(prefix))
 idxs1, preds5 = eval_submission(test_generator)
 
 preds = preds1 + preds2 + preds3 + preds4 + preds5
+preds_num = len(preds)
 
-preds[preds>2.5] = 1
-preds[preds<=2.5] = 0
+preds_final = []
+for i in range(preds_num):
+    if preds[i]>2.5:
+        preds_final.append(1)
+    else:
+        preds_final.append(0)
+#preds[preds>2.5] = 1
+#preds[preds<=2.5] = 0
 
 submission = pd.DataFrame({'id': idxs1,
-                         'label': preds})
+                         'label': preds_final})
 
 submission_file = 'result.csv'
 submission.to_csv(submission_file, index=False)

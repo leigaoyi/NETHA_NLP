@@ -28,16 +28,16 @@ import pandas as pd
 #set_gelu('tanh')  # 切换gelu版本
 
 
-epoch_num = 15
+epoch_num = 16
 prefix = 'NEZHA'
 
 
 num_classes = 2
 maxlen = 128
 batch_size = 64
-lr = 1.5e-5
+lr = 3e-5
 
-alpha = 0.6 # 对抗性权重
+alpha = 0.2 # 对抗性权重
 
 ## BERT base
 #config_path = 'publish/bert_config.json'
@@ -129,7 +129,7 @@ bert = build_bert_model(
     return_keras_model=False,
 )                
 
-output = Dropout(rate=0.01)(bert.model.output)
+output = Dropout(rate=0.04)(bert.model.output)
 ## 加了adversarial 层后，可以考虑更稳定些
 #output = Lambda(lambda x: x[:, 0])(bert.model.output)
 
@@ -140,11 +140,40 @@ output = Dense(units=2,
 model = keras.models.Model(bert.model.input, output)
 model.summary()
 
+
+##adding gradient panalty
+def sparse_categorical_crossentropy(y_true, y_pred):
+    """自定义稀疏交叉熵
+    这主要是因为tf自带的sparse_categorical_crossentropy不支持求二阶梯度。
+    """
+    y_true = K.reshape(y_true, K.shape(y_pred)[:-1])
+    y_true = K.cast(y_true, 'int32')
+    y_true = K.one_hot(y_true, K.shape(y_pred)[-1])
+    return K.mean(K.categorical_crossentropy(y_true, y_pred))
+
+
+def loss_with_gradient_penalty(y_true, y_pred):
+    """带梯度惩罚的loss
+    """
+    loss = sparse_categorical_crossentropy(y_true, y_pred)
+    embeddings = search_layer(y_pred, 'Embedding-Token').embeddings
+    gp = K.sum(K.gradients(loss, [embeddings])[0].values**2)
+    return loss + 0.5 * gp
+
+
 model.compile(
-    loss='sparse_categorical_crossentropy',
-    optimizer=Adam(lr),
+    loss=loss_with_gradient_penalty,
+    optimizer=Adam(lr),  # 用足够小的学习率
+    #optimizer=PiecewiseLinearLearningRate(Adam(5e-5), {10000: 1, 30000: 0.1}),
     metrics=['accuracy'],
 )
+
+
+#model.compile(
+#    loss='sparse_categorical_crossentropy',
+#    optimizer=Adam(lr),
+#    metrics=['accuracy'],
+#)
 
 
 def adversarial_training(model, embedding_name, epsilon=1):
@@ -223,6 +252,9 @@ class Evaluator(keras.callbacks.Callback):
 
 
 #========================Init=============================
+#print('****************Start init*******************')
+#model.save_weights('{0}_best_{1}_model.weights'.format(prefix, 0))
+
 print('****************Start init*******************')
 all_data = load_data('./data/small.csv')
 random_order = range(len(all_data))
@@ -239,10 +271,10 @@ test_generator = data_generator(test_data, batch_size)
 evaluator = Evaluator(num=0)
 model.fit_generator(train_generator.forfit(),
                     steps_per_epoch=len(train_generator),
-                    epochs=8,
+                    epochs=1,
                     callbacks=[evaluator])
 
-
+print('Random init over!')
 #================================First==================
 print('**************First Model**********************')
 all_data = load_data('./data/train.csv')
