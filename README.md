@@ -40,7 +40,7 @@ docker pull registry.cn-shanghai.aliyuncs.com/tcc-public/keras:latest-cuda10.0-p
 
 docker build -t registry.cn-shenzhen.aliyuncs.com/gpu_leigaoyi/tianchi/cy/qoo:5.2 .
 
-docker login --username=\<your user name\> registry.cn-shenzhen.aliyuncs.com
+docker login --username=\<your user name\>@registry.cn-shenzhen.aliyuncs.com
   
 docker push registry.cn-shenzhen.aliyuncs.com/gpu_leigaoyi/tianchi/cy/qoo:5.2
 
