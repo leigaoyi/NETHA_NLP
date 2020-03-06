@@ -1,7 +1,13 @@
 # NETHA_NLP
 Running order:
+
+
 python3 concat.py   % 训练NEZHA模型
+
+
 python3 adverse.py  %训练Google bert-base 模型
+
+
 python3 eval.py     % 测试infer.py代码是否正确
 
 ## Submission
