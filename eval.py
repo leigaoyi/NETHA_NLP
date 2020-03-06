@@ -94,8 +94,8 @@ print('{0}_best_model.weights'.format(prefix))
 #===================load first model=============
 # HuaWei NeTha
 config_path = 'NEZHA/bert_config.json'
-checkpoint_path = 'NEZHA/model.ckpt-691689'
-dict_path = 'NEZHA/vocab.txt'           
+checkpoint_path = 'NEZHA/model.ckpt-900000'
+dict_path = 'NEZHA/vocab.txt'          
 
 tokenizer = Tokenizer(dict_path, do_lower_case=True)     
 ##加载预训练模型:: 华为
@@ -107,7 +107,7 @@ bert = build_bert_model(
     return_keras_model=False,
 )    
 
-output = Dropout(rate=0.04)(bert.model.output)
+output = Dropout(rate=0.1)(bert.model.output)
 output = Dense(units=2,
                activation='softmax',
                kernel_initializer=bert.initializer)(output)
@@ -175,7 +175,7 @@ preds_num = len(preds)
 
 preds_final = []
 for i in range(preds_num):
-    if preds[i]>4.5:
+    if preds[i]>3.5:
         preds_final.append(1)
     else:
         preds_final.append(0)
@@ -183,7 +183,7 @@ for i in range(preds_num):
 #preds[preds<=2.5] = 0
 
 
-print('Qoo:5.1')
+print('Qoo:5.3')
 
 submission = pd.DataFrame({'id': idxs1,
                          'label': preds_final})

@@ -28,7 +28,7 @@ import pandas as pd
 #set_gelu('tanh')  # 切换gelu版本
 
 
-epoch_num = 14
+epoch_num = 18
 prefix = 'NEZHA'
 
 
@@ -37,7 +37,7 @@ maxlen = 128
 batch_size = 64
 lr = 1.5e-5
 
-alpha = 0.3 # 对抗性权重
+alpha = 0.4 # 对抗性权重
 
 ## BERT base
 #config_path = 'publish/bert_config.json'
@@ -46,7 +46,7 @@ alpha = 0.3 # 对抗性权重
 
 # HuaWei NeTha
 config_path = 'NEZHA/bert_config.json'
-checkpoint_path = 'NEZHA/model.ckpt-691689'
+checkpoint_path = 'NEZHA/model.ckpt-900000'
 dict_path = 'NEZHA/vocab.txt'
 
 
@@ -129,7 +129,7 @@ bert = build_bert_model(
     return_keras_model=False,
 )                
 
-output = Dropout(rate=0.04)(bert.model.output)
+output = Dropout(rate=0.1)(bert.model.output)
 ## 加了adversarial 层后，可以考虑更稳定些
 #output = Lambda(lambda x: x[:, 0])(bert.model.output)
 
@@ -285,8 +285,8 @@ np.random.shuffle(list(random_order))
 for turn in range(1, 3):
     print('*****************Turn {}**********************'.format(turn))
     model.load_weights('{0}_best_0_model.weights'.format(prefix))
-    train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != (turn-1)]
-    valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == (turn-1)]
+    train_data = [all_data[j] for i, j in enumerate(random_order) if i % 2 != (turn-1)]
+    valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 2 == (turn-1)]
     test_data = valid_data
     # 转换数据集
     train_generator = data_generator(train_data, batch_size)
