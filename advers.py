@@ -29,7 +29,7 @@ import pandas as pd
 
 
 epoch_num = 15
-prefix = 'NEZHA'
+prefix = 'Google'
 
 
 num_classes = 2
@@ -37,17 +37,17 @@ maxlen = 128
 batch_size = 64
 lr = 1.5e-5
 
-alpha = 0.6 # 对抗性权重
+alpha = 0.5 # 对抗性权重
 
-## BERT base
-#config_path = 'publish/bert_config.json'
-#checkpoint_path = 'publish/bert_model.ckpt'
-#dict_path = 'publish/vocab.txt'
+# BERT base
+config_path = 'publish/bert_config.json'
+checkpoint_path = 'publish/bert_model.ckpt'
+dict_path = 'publish/vocab.txt'
 
-# HuaWei NeTha
-config_path = 'NEZHA/bert_config.json'
-checkpoint_path = 'NEZHA/model.ckpt-900000'
-dict_path = 'NEZHA/vocab.txt'
+## HuaWei NeTha
+#config_path = 'NEZHA/bert_config.json'
+#checkpoint_path = 'NEZHA/model.ckpt-900000'
+#dict_path = 'NEZHA/vocab.txt'
 
 
 def load_data(filename):
@@ -113,21 +113,21 @@ class data_generator(DataGenerator):
 #    return_keras_model=False,
 #)
 
-#bert = build_bert_model(
-#    config_path=config_path,
-#    checkpoint_path=checkpoint_path,
-#    with_pool=True,
-#    return_keras_model=False,
-#)
-                
-##加载预训练模型:: 华为
 bert = build_bert_model(
     config_path=config_path,
     checkpoint_path=checkpoint_path,
-    model='nezha',
     with_pool=True,
     return_keras_model=False,
-)                
+)
+                
+###加载预训练模型:: 华为
+#bert = build_bert_model(
+#    config_path=config_path,
+#    checkpoint_path=checkpoint_path,
+#    model='nezha',
+#    with_pool=True,
+#    return_keras_model=False,
+#)                
 
 output = Dropout(rate=0.01)(bert.model.output)
 ## 加了adversarial 层后，可以考虑更稳定些
@@ -239,98 +239,34 @@ test_generator = data_generator(test_data, batch_size)
 evaluator = Evaluator(num=0)
 model.fit_generator(train_generator.forfit(),
                     steps_per_epoch=len(train_generator),
-                    epochs=8,
+                    epochs=2,
                     callbacks=[evaluator])
 
 
 #================================First==================
-print('**************First Model**********************')
+
+#print('**************First Model**********************')
 all_data = load_data('./data/train.csv')
 random_order = range(len(all_data))
 np.random.shuffle(list(random_order))
 
-
-model.load_weights('{0}_best_0_model.weights'.format(prefix))
-train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != 0]
-valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == 0]
-test_data = valid_data
-# 转换数据集
-train_generator = data_generator(train_data, batch_size)
-valid_generator = data_generator(valid_data, batch_size)
-test_generator = data_generator(test_data, batch_size)
-
-evaluator = Evaluator(num=1)
-model.fit_generator(train_generator.forfit(),
-                    steps_per_epoch=len(train_generator),
-                    epochs=epoch_num,
-                    callbacks=[evaluator])
-
-#==================second turn===========================
-
-print('*************************Second Turn*************************')
-model.load_weights('{0}_best_0_model.weights'.format(prefix))
-train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != 1]
-valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == 1]
-test_data = valid_data
-# 转换数据集
-train_generator = data_generator(train_data, batch_size)
-valid_generator = data_generator(valid_data, batch_size)
-test_generator = data_generator(test_data, batch_size)
-
-evaluator = Evaluator(num=2)
-model.fit_generator(train_generator.forfit(),
-                    steps_per_epoch=len(train_generator),
-                    epochs=epoch_num,
-                    callbacks=[evaluator])
-
-#===================third turn===========================
-print('******************Three******************')
-model.load_weights('{0}_best_0_model.weights'.format(prefix))
-train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != 2]
-valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == 2]
-test_data = valid_data
-# 转换数据集
-train_generator = data_generator(train_data, batch_size)
-valid_generator = data_generator(valid_data, batch_size)
-test_generator = data_generator(test_data, batch_size)
-
-evaluator = Evaluator(num=3)
-model.fit_generator(train_generator.forfit(),
-                    steps_per_epoch=len(train_generator),
-                    epochs=epoch_num,
-                    callbacks=[evaluator])
-
-
-##=====================================4===========
-print('******************Four******************')
-model.load_weights('{0}_best_0_model.weights'.format(prefix))
-train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != 3]
-valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == 3]
-test_data = valid_data
-# 转换数据集
-train_generator = data_generator(train_data, batch_size)
-valid_generator = data_generator(valid_data, batch_size)
-test_generator = data_generator(test_data, batch_size)
-
-evaluator = Evaluator(num=4)
-model.fit_generator(train_generator.forfit(),
-                    steps_per_epoch=len(train_generator),
-                    epochs=epoch_num,
-                    callbacks=[evaluator])
-
-#==================================5================
-print('*****************Last score**********************')
-model.load_weights('{0}_best_0_model.weights'.format(prefix))
-train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != 4]
-valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == 4]
-test_data = valid_data
-# 转换数据集
-train_generator = data_generator(train_data, batch_size)
-valid_generator = data_generator(valid_data, batch_size)
-test_generator = data_generator(test_data, batch_size)
-
-evaluator = Evaluator(num=5)
-model.fit_generator(train_generator.forfit(),
-                    steps_per_epoch=len(train_generator),
-                    epochs=epoch_num,
-                    callbacks=[evaluator])
+for turn in range(1, 6):
+    print('*****************Turn {}**********************'.format(turn))
+    model.load_weights('{0}_best_0_model.weights'.format(prefix))
+    train_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 != (turn-1)]
+    valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 5 == (turn-1)]
+    test_data = valid_data
+    # 转换数据集
+    train_generator = data_generator(train_data, batch_size)
+    valid_generator = data_generator(valid_data, batch_size)
+    test_generator = data_generator(test_data, batch_size)
+    
+    evaluator = Evaluator(num=turn)
+    model.fit_generator(train_generator.forfit(),
+                        steps_per_epoch=len(train_generator),
+                        epochs=epoch_num,
+                        callbacks=[evaluator])
+    model.load_weights('{0}_best_{1}_model.weights'.format(prefix, turn))
+    best_score = evaluate(test_generator)
+    with open('{}_record_acc.txt'.format(prefix), 'a+') as f:
+        f.write('Turn {0} Best acc {1:.4f}\n'.format(turn, best_score))

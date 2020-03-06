@@ -48,25 +48,6 @@ test_data = load_data('/tcdata/test.csv')
 batch_size = 1
 
 
-# HuaWei NeTha
-config_path = 'NEZHA/bert_config.json'
-checkpoint_path = 'NEZHA/model.ckpt-900000'
-dict_path = 'NEZHA/vocab.txt'
-
-# 加载数据集
-#all_data = load_data('./data/train_20200228.csv')
-#random_order = range(len(all_data))
-#np.random.shuffle(list(random_order))
-#train_data = [all_data[j] for i, j in enumerate(random_order) if i % 6 != 1 and i%6!=2]
-#valid_data = [all_data[j] for i, j in enumerate(random_order) if i % 6 == 1]
-#test_data = [all_data[j] for i, j in enumerate(random_order) if i % 6 == 2]
-# 建立分词器
-    
-
-
-tokenizer = Tokenizer(dict_path, do_lower_case=True)
-
-
 class test_data_generator(DataGenerator):
     """数据生成器
     """
@@ -91,34 +72,7 @@ class test_data_generator(DataGenerator):
                 yield [batch_token_ids, batch_segment_ids], idx_i
                 batch_token_ids, batch_segment_ids, batch_labels = [], [], []
                 
-                
-##加载预训练模型:: 华为
-bert = build_bert_model(
-    config_path=config_path,
-    checkpoint_path=checkpoint_path,
-    model='nezha',
-    with_pool=True,
-    return_keras_model=False,
-)    
 
-#if prefix=='HUAWEI':
-#     #加载预训练模型:: 华为
-#    bert = build_bert_model(
-#        config_path=config_path,
-#        checkpoint_path=checkpoint_path,
-#        model='nezha',
-#        with_pool=True,
-#        return_keras_model=False,
-#    )
-
-
-output = Dropout(rate=0.04)(bert.model.output)
-output = Dense(units=2,
-               activation='softmax',
-               kernel_initializer=bert.initializer)(output)
-
-model = keras.models.Model(bert.model.input, output)
-model.summary()
 
 
 def eval_submission(data):
@@ -137,7 +91,31 @@ def eval_submission(data):
 test_generator = test_data_generator(test_data, 1)
 print('{0}_best_model.weights'.format(prefix))
 
+#===================load first model=============
+# HuaWei NeTha
+config_path = 'NEZHA/bert_config.json'
+checkpoint_path = 'NEZHA/model.ckpt-691689'
+dict_path = 'NEZHA/vocab.txt'           
 
+tokenizer = Tokenizer(dict_path, do_lower_case=True)     
+##加载预训练模型:: 华为
+bert = build_bert_model(
+    config_path=config_path,
+    checkpoint_path=checkpoint_path,
+    model='nezha',
+    with_pool=True,
+    return_keras_model=False,
+)    
+
+output = Dropout(rate=0.04)(bert.model.output)
+output = Dense(units=2,
+               activation='softmax',
+               kernel_initializer=bert.initializer)(output)
+
+model = keras.models.Model(bert.model.input, output)
+model.summary()
+#===================load first model=====================
+prefix = 'NEZHA'
 model.load_weights('{0}_best_1_model.weights'.format(prefix))
 idxs1, preds1 = eval_submission(test_generator)
 
@@ -145,28 +123,67 @@ print('Beging first')
 model.load_weights('{0}_best_2_model.weights'.format(prefix))
 idxs1, preds2 = eval_submission(test_generator)
 
-print('Begin three')
-model.load_weights('{0}_best_3_model.weights'.format(prefix))
+
+
+#==================load second model====================
+prefix = 'Google'
+
+config_path = 'publish/bert_config.json'
+checkpoint_path = 'publish/bert_model.ckpt'
+dict_path = 'publish/vocab.txt'            
+
+tokenizer = Tokenizer(dict_path, do_lower_case=True)
+
+
+bert = build_bert_model(
+    config_path=config_path,
+    checkpoint_path=checkpoint_path,
+    with_pool=True,
+    return_keras_model=False,
+)    
+
+output = Dropout(rate=0.01)(bert.model.output)
+output = Dense(units=2,
+               activation='softmax',
+               kernel_initializer=bert.initializer)(output)
+
+model = keras.models.Model(bert.model.input, output)
+model.summary()
+#==============load second checkpoints=====================
+
+model.load_weights('{0}_best_1_model.weights'.format(prefix))
 idxs1, preds3 = eval_submission(test_generator)
 
-model.load_weights('{0}_best_4_model.weights'.format(prefix))
+print('Beging first')
+model.load_weights('{0}_best_2_model.weights'.format(prefix))
 idxs1, preds4 = eval_submission(test_generator)
 
-print('Begin last')
-model.load_weights('{0}_best_5_model.weights'.format(prefix))
+print('Begin three')
+model.load_weights('{0}_best_3_model.weights'.format(prefix))
 idxs1, preds5 = eval_submission(test_generator)
 
-preds = preds1 + preds2 + preds3 + preds4 + preds5
+model.load_weights('{0}_best_4_model.weights'.format(prefix))
+idxs1, preds6 = eval_submission(test_generator)
+
+print('Beging last')
+model.load_weights('{0}_best_5_model.weights'.format(prefix))
+idxs1, preds7 = eval_submission(test_generator)
+
+
+preds = preds1 + preds2 + preds3 + preds4 + preds5 + preds6 + preds7
 preds_num = len(preds)
 
 preds_final = []
 for i in range(preds_num):
-    if preds[i]>2.5:
+    if preds[i]>3.5:
         preds_final.append(1)
     else:
         preds_final.append(0)
 #preds[preds>2.5] = 1
 #preds[preds<=2.5] = 0
+
+
+print('Qoo:5.2')
 
 submission = pd.DataFrame({'id': idxs1,
                          'label': preds_final})
