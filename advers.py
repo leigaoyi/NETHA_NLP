@@ -80,7 +80,7 @@ class data_generator(DataGenerator):
     """数据生成器
     """
 
-    def __iter__(self, random=False):
+    def __iter__(self, random=True):
         idxs = list(range(len(self.data)))
         if random:
             np.random.shuffle(idxs)
@@ -225,8 +225,8 @@ class Evaluator(keras.callbacks.Callback):
 #========================Init=============================
 print('****************Start init*******************')
 all_data = load_data('./data/small.csv')
-random_order = range(len(all_data))
-np.random.shuffle(list(random_order))
+random_order = list(range(len(all_data)))
+np.random.shuffle(random_order)
         
 train_data = all_data
 valid_data = all_data
