@@ -59,6 +59,6 @@ seaborn
 six==1.11.0
 tensorboard==1.14.0
 tensorflow-estimator==1.14.0
-tensorflow-gpu==1.14.0
+tensorflow-gpu==2.3.1
 tqdm
 bert4keras==0.5.6
